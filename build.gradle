@@ -1,0 +1,117 @@
+buildscript {
+	ext {
+		springBootVersion = '2.0.4.RELEASE'
+		//avroPluginVersion = '0.9.1'
+	}
+	repositories {
+		mavenCentral()
+		maven { url "https://repo.spring.io/snapshot" }
+		maven { url "https://repo.spring.io/milestone" }
+		maven { url "https://plugins.gradle.org/m2/" }
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+		//classpath("com.commercehub.gradle.plugin:gradle-avro-plugin:${avroPluginVersion}")
+	}
+}
+
+plugins {
+    id 'io.franzbecker.gradle-lombok' version '1.14'
+    id 'java'
+    id 'eclipse'
+}
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+//apply plugin: 'com.commercehub.gradle.plugin.avro'
+
+
+
+group = 'zav.poc'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+	maven { url "https://repo.spring.io/snapshot" }
+	maven { url "https://repo.spring.io/milestone" }
+	maven { url "https://repo.spring.io/libs-snapshot" }	
+	maven { url "http://packages.confluent.io/maven/" }	
+}
+
+sourceSets {
+    main {
+        java {
+	        srcDirs += ['build/generated-main-avro-java']
+        }
+    }
+}
+
+configurations {
+    all*.exclude module : 'spring-boot-starter-logging'
+}
+
+eclipse {
+    classpath {
+        file.whenMerged { classpath ->
+            def iterator = classpath.entries.iterator()
+            while(iterator.hasNext()) {
+            	def cpe = iterator.next()
+            	if(cpe instanceof org.gradle.plugins.ide.eclipse.model.SourceFolder) {
+            		if(cpe.path.contains('test/java')) {
+	            		cpe.setOutput('build/classes/java/test/')
+	            	} else if(cpe.path.contains('main/resources')) {
+	            		cpe.setOutput('build/resources/main/')
+	            	} else {
+	            		cpe.setOutput('build/classes/java/main/')
+	            	}
+            	}
+            }
+        }
+    }
+}
+
+dependencies {
+
+	ext {
+		springKafkaVersion = '2.1.9.RELEASE'
+		kafkaVersion = '1.1.0'
+		confluentPlatformVersion = '4.1.1'
+	}
+
+	compile (
+//		"org.springframework.boot:spring-boot-starter-log4j2",
+		"org.springframework.boot:spring-boot-starter-actuator",
+		"org.springframework.boot:spring-boot-starter-webflux",
+
+		"org.springframework.kafka:spring-kafka:${springKafkaVersion}",
+		"org.apache.kafka:kafka-clients:${kafkaVersion}",
+		"org.apache.kafka:kafka-streams:${kafkaVersion}",
+		
+		"io.confluent:kafka-avro-serializer:${confluentPlatformVersion}",
+		"io.confluent:kafka-streams-avro-serde:${confluentPlatformVersion}",
+		"io.confluent:kafka-json-serializer:${confluentPlatformVersion}",
+				
+		"org.apache.logging.log4j:log4j-api:2.11.1",
+		"org.apache.logging.log4j:log4j-core:2.11.1",
+		"log4j:log4j:1.2.17"	
+	)
+	
+	/* devtools does not work with avro unfortunately */
+	// runtime('org.springframework.boot:spring-boot-devtools')
+	testCompile(
+		"org.springframework.boot:spring-boot-starter-test",
+		"org.springframework.kafka:spring-kafka-test:${springKafkaVersion}"
+				
+	)	
+}
+
+lombok {
+	version = "1.18.2"
+	sha256 = ""
+}
+
+bootJar {
+    baseName = project.findProperty('jarFileName') ?: 'zav_poc_adapter_xxx'
+    version =  project.findProperty('jarFileVersion') ?: 'localVersion'
+}

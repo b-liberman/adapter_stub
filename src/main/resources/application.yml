@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: ZavMwPoc
+  main:
+    web-environment: false
+  
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    zav: DEBUG
+
+server:
+  port: 8083
+
+zavMwPoc:
+  kafka:
+    bootstrapServers: localhost:29092
+    topic: zavMwPoCTopic
