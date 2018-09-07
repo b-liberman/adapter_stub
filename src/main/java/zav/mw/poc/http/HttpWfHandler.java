@@ -49,4 +49,18 @@ public class HttpWfHandler {
 			}).subscribe();
 		});
 	}
+
+	public Mono<ServerResponse> justLog(ServerRequest request) {
+
+		return Mono.<ServerResponse>create(cb -> {
+			request.body(BodyExtractors.toMono(String.class)).doOnSuccess(message -> {
+				log.debug("received message: " + message);
+				ok().body(BodyInserters.fromObject("just logged"))
+						.doOnSuccess(serverResponse -> cb.success(serverResponse)).subscribe();
+			}).doOnError(t -> {
+				log.error("could not extract body", t);
+				cb.error(t);
+			}).subscribe();
+		});
+	}
 }
