@@ -56,7 +56,7 @@ public class HttpWfServiceConfig {
 			ReactorHttpHandlerAdapter adapter) {
 		return args -> {
 			executor.execute(() -> {
-				httpServer.newHandler(adapter).block().onClose().block();
+				httpServer.newHandler(adapter).block();
 			});
 		};
 	}
