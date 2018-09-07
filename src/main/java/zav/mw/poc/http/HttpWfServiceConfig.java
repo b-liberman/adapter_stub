@@ -23,6 +23,7 @@ import reactor.ipc.netty.http.server.HttpServer;
 @Configuration
 public class HttpWfServiceConfig {
 
+	public static final String TEST_INTERNAL_CALL = "/test-internal-call";
 	@Value("${server.port}")
 	private int portNumber;
 
@@ -33,7 +34,7 @@ public class HttpWfServiceConfig {
 						request -> ok().body(BodyInserters
 								.fromObject("Hello, here is a post response: " + request.pathVariable("id"))))
 				.andRoute(POST("/test-kafka-send/{key}"), httpWfHandler::sendToKafka)
-				.andRoute(POST("/test-internal-call"), httpWfHandler::justLog);
+				.andRoute(POST(TEST_INTERNAL_CALL), httpWfHandler::justLog);
 	}
 
 	@Bean

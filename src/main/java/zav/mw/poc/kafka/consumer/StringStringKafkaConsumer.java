@@ -10,6 +10,8 @@ import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import zav.mw.poc.http.HttpWfServiceConfig;
+
 @Component
 public class StringStringKafkaConsumer {
 
@@ -21,8 +23,9 @@ public class StringStringKafkaConsumer {
 	@KafkaListener(topics = "${zavMwPoc.kafka.topic}")
 	public void listen(ConsumerRecord<String, String> record) {
 		log.debug("received message with key " + record.key() + " value " + record.value());
-		webClient.post().uri("/test-internal-call").body(BodyInserters.fromObject(record.value())).exchange()
-				.doOnSuccess(cr -> cr.body(BodyExtractors.toMono(String.class))
-						.subscribe(returnedMessage -> log.debug(returnedMessage))).subscribe();
+		webClient.post().uri(HttpWfServiceConfig.TEST_INTERNAL_CALL).body(BodyInserters.fromObject(record.value()))
+				.exchange().doOnSuccess(cr -> cr.body(BodyExtractors.toMono(String.class))
+						.subscribe(returnedMessage -> log.debug(returnedMessage)))
+				.subscribe();
 	}
 }
