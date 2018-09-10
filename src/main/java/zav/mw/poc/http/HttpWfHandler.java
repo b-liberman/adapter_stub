@@ -74,7 +74,7 @@ public class HttpWfHandler {
 			request.body(BodyExtractors.toMono(String.class)).doOnSuccess(message -> {
 				syncReqRespHelper.addRecord(correlationId, monoSink);
 				producer.sendForSync(correlationId, key, message)
-						.doOnSuccess(responseFromKafka -> log.debug("sent message: " + responseFromKafka))
+						.doOnSuccess(responseFromKafka -> log.debug("sent request: " + responseFromKafka))
 						.doOnError(t -> {
 							log.error("could send to kafka", t);
 							syncReqRespHelper.deleteRecord(correlationId);
