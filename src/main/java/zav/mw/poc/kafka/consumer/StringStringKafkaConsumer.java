@@ -2,6 +2,8 @@ package zav.mw.poc.kafka.consumer;
 
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,8 +36,7 @@ public class StringStringKafkaConsumer {
 	@KafkaListener(topics = "${zavMwPoc.kafka.topic}")
 	public void listen(ConsumerRecord<String, String> record) {
 		log.debug("received message with key " + record.key() + " value " + record.value());
-		webClient.post().uri(HttpWfServiceConfig.TEST_INTERNAL_CALL).body(BodyInserters.fromObject(record.value()))
-				.exchange()
+		webClient.post().uri(HttpWfServiceConfig.JUST_LOG_URI).body(BodyInserters.fromObject(record.value())).exchange()
 				.doOnSuccess(cr -> cr.body(BodyExtractors.toMono(String.class))
 						.subscribe(returnedMessage -> log.debug(returnedMessage)))
 				.subscribeOn(Schedulers.newSingle("web-client-thread")).subscribe();
@@ -45,7 +46,21 @@ public class StringStringKafkaConsumer {
 	@SendTo
 	public String listenSyncReq(ConsumerRecord<String, String> record) {
 		log.debug("received sync request message with key " + record.key() + " value " + record.value());
-		return "this is a sync response to " + record.value();
+
+		CompletableFuture<String> cf = new CompletableFuture<String>();
+
+		webClient.post().uri(HttpWfServiceConfig.TEST_KAFKA_RR_ECHO_URI).body(BodyInserters.fromObject(record.value()))
+				.exchange()
+				.doOnSuccess(cr -> cr.body(BodyExtractors.toMono(String.class))
+						.subscribe(returnedMessage -> cf.complete(returnedMessage)))
+				.subscribeOn(Schedulers.newSingle("web-client-thread")).subscribe();
+		try {
+			//@SendTo is synchronous. Maybe we should not use it at all...
+			return cf.get();
+		} catch (Exception e) {
+			log.error("coult not retrieve sync response form the http service", e);
+			return e.getMessage();
+		}
 	}
 
 	@KafkaListener(topics = "${zavMwPoc.kafka.sync-resp-topic}")
