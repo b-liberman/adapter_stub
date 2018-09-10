@@ -45,18 +45,20 @@ public class StringStringKafkaConsumer {
 	@KafkaListener(topics = "${zavMwPoc.kafka.sync-req-topic}")
 	@SendTo
 	public String listenSyncReq(ConsumerRecord<String, String> record) {
+		
 		log.debug("received sync request message with key " + record.key() + " value " + record.value());
 
-		CompletableFuture<String> cf = new CompletableFuture<String>();
+		CompletableFuture<String> completableFuture = new CompletableFuture<String>();
 
 		webClient.post().uri(HttpWfServiceConfig.TEST_KAFKA_RR_ECHO_URI).body(BodyInserters.fromObject(record.value()))
 				.exchange()
 				.doOnSuccess(cr -> cr.body(BodyExtractors.toMono(String.class))
-						.subscribe(returnedMessage -> cf.complete(returnedMessage)))
+						.subscribe(returnedMessage -> completableFuture.complete(returnedMessage)))
+				.doOnError(t -> completableFuture.completeExceptionally(t))
 				.subscribeOn(Schedulers.newSingle("web-client-thread")).subscribe();
 		try {
-			//@SendTo is synchronous. Maybe we should not use it at all...
-			return cf.get();
+			// @SendTo is synchronous. Maybe we should not use it at all...
+			return completableFuture.get();
 		} catch (Exception e) {
 			log.error("coult not retrieve sync response form the http service", e);
 			return e.getMessage();
