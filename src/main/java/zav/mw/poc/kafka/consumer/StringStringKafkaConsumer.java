@@ -45,7 +45,7 @@ public class StringStringKafkaConsumer {
 	@KafkaListener(topics = "${zavMwPoc.kafka.sync-req-topic}")
 	@SendTo
 	public String listenSyncReq(ConsumerRecord<String, String> record) {
-		
+
 		log.debug("received sync request message with key " + record.key() + " value " + record.value());
 
 		CompletableFuture<String> completableFuture = new CompletableFuture<String>();
@@ -80,6 +80,7 @@ public class StringStringKafkaConsumer {
 		syncReqRespHelper.deleteRecord(correlationId);
 
 		ok().body(BodyInserters.fromObject(record.value()))
-				.doOnSuccess(serverResponse -> monoSink.success(serverResponse)).subscribe();
+				.doOnSuccess(serverResponse -> monoSink.success(serverResponse)).doOnError(t -> monoSink.error(t))
+				.subscribe();
 	}
 }
