@@ -25,10 +25,6 @@ public class HttpWfHandler {
 
 	private final Logger log = LogManager.getLogger(this.getClass());
 
-	public Mono<ServerResponse> getResponse(ServerRequest request) {
-		return ok().body(BodyInserters.fromObject("Hello, here I am: " + request.pathVariable("id")));
-	}
-
 	public Mono<ServerResponse> sendToKafka(ServerRequest request) {
 
 		String key = request.pathVariable("key") + UUID.randomUUID();

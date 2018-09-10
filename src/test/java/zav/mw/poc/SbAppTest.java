@@ -23,18 +23,6 @@ public class SbAppTest {
 	public static void destroy() {
 		SpringApplication.exit(context);
 	}
-
-	@Test
-	public void testGet() throws Exception {
-		client.get().uri("/test-get/abc231").exchange().expectStatus().isOk().expectBody()
-				.equals("Hello, here I am: abc231");
-	}
-
-	@Test
-	public void testPost() throws Exception {
-		client.post().uri("/test-post/abc231").body(BodyInserters.fromObject("bbboooddyy")).exchange().expectStatus().isOk()
-				.expectBody().equals("Hello, here is a post response: bbboooddyy");
-	}
 	
 	@Test
 	public void testKafkaSend() throws Exception {

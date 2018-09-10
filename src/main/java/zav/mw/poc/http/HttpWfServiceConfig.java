@@ -1,9 +1,7 @@
 package zav.mw.poc.http;
 
-import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -13,7 +11,6 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.server.reactive.HttpHandler;
 import org.springframework.http.server.reactive.ReactorHttpHandlerAdapter;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -29,12 +26,8 @@ public class HttpWfServiceConfig {
 
 	@Bean
 	public RouterFunction<ServerResponse> httpWfRouterFunction(HttpWfHandler httpWfHandler) {
-		return route(GET("/test-get/{id}"), httpWfHandler::getResponse)
-				.andRoute(POST("/test-post/{id}"),
-						request -> ok().body(BodyInserters
-								.fromObject("Hello, here is a post response: " + request.pathVariable("id"))))
-				.andRoute(POST("/test-kafka-send/{key}"), httpWfHandler::sendToKafka)
-				.andRoute(POST(TEST_INTERNAL_CALL), httpWfHandler::justLog);
+		return route(POST("/test-kafka-send/{key}"), httpWfHandler::sendToKafka).andRoute(POST(TEST_INTERNAL_CALL),
+				httpWfHandler::justLog);
 	}
 
 	@Bean
