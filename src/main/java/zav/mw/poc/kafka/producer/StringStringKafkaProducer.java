@@ -24,24 +24,24 @@ public class StringStringKafkaProducer {
 	@Value("${zavMwPoc.kafka.topic}")
 	private String topic;
 
-	public Mono<Void> send(String key, String message) {
+	public Mono<String> send(String key, String message) {
 
 		final ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, key, message);
 		ListenableFuture<SendResult<String, String>> future = kafkaStringStringTemplate.send(record);
 
-		return Mono.<Void>create(cb -> {
+		return Mono.<String>create(monoSink -> {
 			future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
 
 				@Override
 				public void onSuccess(SendResult<String, String> result) {
 					log.debug("sent message with key " + result.getProducerRecord().key());
-					cb.success();
+					monoSink.success(result.getRecordMetadata().partition() + ":" + result.getRecordMetadata().offset());
 				}
 
 				@Override
 				public void onFailure(Throwable ex) {
 					log.error("could not send message to kafka", ex);
-					cb.error(ex);
+					monoSink.error(ex);
 				}
 			});
 		});

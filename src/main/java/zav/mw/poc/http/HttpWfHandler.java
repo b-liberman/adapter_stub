@@ -14,6 +14,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import zav.mw.poc.kafka.producer.StringStringKafkaProducer;
 
 @Component
@@ -32,34 +33,34 @@ public class HttpWfHandler {
 
 		String key = request.pathVariable("key") + UUID.randomUUID();
 
-		return Mono.<ServerResponse>create(cb -> {
+		return Mono.<ServerResponse>create(monoSink -> {
 
 			request.body(BodyExtractors.toMono(String.class)).doOnSuccess(message -> {
-				producer.send(key, message + "\n" + UUID.randomUUID()).doOnSuccess(c -> {
+				producer.send(key, message + "\n" + UUID.randomUUID()).doOnSuccess(responseFromKafka -> {
 					log.debug("sent message with key " + key);
-					ok().body(BodyInserters.fromObject("message sent to kafka"))
-							.doOnSuccess(serverResponse -> cb.success(serverResponse)).subscribe();
+					ok().body(BodyInserters.fromObject("message sent to kafka: " + responseFromKafka))
+							.doOnSuccess(serverResponse -> monoSink.success(serverResponse)).subscribe();
 				}).doOnError(t -> {
 					log.error("could send to kafka", t);
-					cb.error(t);
-				}).subscribe();
+					monoSink.error(t);
+				}).subscribeOn(Schedulers.newSingle("kafka-thread")).subscribe();
 			}).doOnError(t -> {
 				log.error("could not extract body", t);
-				cb.error(t);
+				monoSink.error(t);
 			}).subscribe();
 		});
 	}
 
 	public Mono<ServerResponse> justLog(ServerRequest request) {
 
-		return Mono.<ServerResponse>create(cb -> {
+		return Mono.<ServerResponse>create(monoSink -> {
 			request.body(BodyExtractors.toMono(String.class)).doOnSuccess(message -> {
 				log.debug("received message: " + message);
 				ok().body(BodyInserters.fromObject("just logged"))
-						.doOnSuccess(serverResponse -> cb.success(serverResponse)).subscribe();
+						.doOnSuccess(serverResponse -> monoSink.success(serverResponse)).subscribe();
 			}).doOnError(t -> {
 				log.error("could not extract body", t);
-				cb.error(t);
+				monoSink.error(t);
 			}).subscribe();
 		});
 	}
