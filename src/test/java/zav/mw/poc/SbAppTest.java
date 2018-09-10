@@ -29,5 +29,10 @@ public class SbAppTest {
 		client.post().uri("/test-kafka-send/abc231").body(BodyInserters.fromObject("message to kafka")).exchange().expectStatus().isOk();
 	}
 	
+	@Test
+	public void testKafkaRr() throws Exception {
+		client.post().uri("/test-kafka-rr/rr123").body(BodyInserters.fromObject("sync request")).exchange().expectStatus().isOk();
+	}
+	
 
 }
