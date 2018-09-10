@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import reactor.core.scheduler.Schedulers;
 import zav.mw.poc.http.HttpWfServiceConfig;
 
 @Component
@@ -24,8 +25,9 @@ public class StringStringKafkaConsumer {
 	public void listen(ConsumerRecord<String, String> record) {
 		log.debug("received message with key " + record.key() + " value " + record.value());
 		webClient.post().uri(HttpWfServiceConfig.TEST_INTERNAL_CALL).body(BodyInserters.fromObject(record.value()))
-				.exchange().doOnSuccess(cr -> cr.body(BodyExtractors.toMono(String.class))
+				.exchange()
+				.doOnSuccess(cr -> cr.body(BodyExtractors.toMono(String.class))
 						.subscribe(returnedMessage -> log.debug(returnedMessage)))
-				.subscribe();
+				.subscribeOn(Schedulers.newSingle("web-client-thread")).subscribe();
 	}
 }
