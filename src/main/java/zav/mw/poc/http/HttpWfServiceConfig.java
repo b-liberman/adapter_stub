@@ -27,7 +27,7 @@ public class HttpWfServiceConfig {
 	@Bean
 	public RouterFunction<ServerResponse> httpWfRouterFunction(HttpWfHandler httpWfHandler) {
 		return route(POST("/test-kafka-send/{key}"), httpWfHandler::sendToKafka).andRoute(POST(TEST_INTERNAL_CALL),
-				httpWfHandler::justLog);
+				httpWfHandler::justLog).andRoute(POST("/test-kafka-rr/{key}"), httpWfHandler::syncRequestResponse);
 	}
 
 	@Bean

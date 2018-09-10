@@ -23,6 +23,9 @@ public class HttpWfHandler {
 	@Autowired
 	private StringStringKafkaProducer producer;
 
+	@Autowired
+	private SyncReqRespHelper syncReqRespHelper;
+
 	private final Logger log = LogManager.getLogger(this.getClass());
 
 	public Mono<ServerResponse> sendToKafka(ServerRequest request) {
@@ -59,5 +62,31 @@ public class HttpWfHandler {
 				monoSink.error(t);
 			}).subscribe();
 		});
+	}
+
+	public Mono<ServerResponse> syncRequestResponse(ServerRequest request) {
+
+		String key = request.pathVariable("key") + UUID.randomUUID();
+		String correlationId = "ci" + UUID.randomUUID();
+
+		Mono<ServerResponse> response = Mono.<ServerResponse>create(monoSink -> {
+
+			request.body(BodyExtractors.toMono(String.class)).doOnSuccess(message -> {
+				syncReqRespHelper.addRecord(correlationId, monoSink);
+				producer.sendForSync(correlationId, key, message)
+						.doOnSuccess(responseFromKafka -> log.debug("sent message: " + responseFromKafka))
+						.doOnError(t -> {
+							log.error("could send to kafka", t);
+							syncReqRespHelper.deleteRecord(correlationId);
+							monoSink.error(t);
+						}).subscribeOn(Schedulers.newSingle("kafka-thread")).subscribe();
+			}).doOnError(t -> {
+				log.error("could not extract body", t);
+				monoSink.error(t);
+			}).subscribe();
+		});
+
+		return response;
+
 	}
 }
