@@ -14,6 +14,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSink;
 import reactor.core.scheduler.Schedulers;
 import zav.mw.poc.kafka.producer.StringStringKafkaProducer;
 
@@ -43,10 +44,7 @@ public class HttpWfHandler {
 					log.error("could send to kafka", t);
 					monoSink.error(t);
 				}).subscribeOn(Schedulers.newSingle("kafka-thread")).subscribe();
-			}).doOnError(t -> {
-				log.error("could not extract body", t);
-				monoSink.error(t);
-			}).subscribe();
+			}).doOnError(t -> reportExtractBodyError(monoSink, t)).subscribe();
 		});
 	}
 
@@ -57,11 +55,13 @@ public class HttpWfHandler {
 				log.debug("received message: " + message);
 				ok().body(BodyInserters.fromObject("just logged"))
 						.doOnSuccess(serverResponse -> monoSink.success(serverResponse)).subscribe();
-			}).doOnError(t -> {
-				log.error("could not extract body", t);
-				monoSink.error(t);
-			}).subscribe();
+			}).doOnError(t -> reportExtractBodyError(monoSink, t)).subscribe();
 		});
+	}
+
+	private void reportExtractBodyError(MonoSink<ServerResponse> monoSink, Throwable t) {
+		log.error("could not extract body", t);
+		monoSink.error(t);
 	}
 
 	public Mono<ServerResponse> syncRequestResponse(ServerRequest request) {
@@ -80,10 +80,7 @@ public class HttpWfHandler {
 							syncReqRespHelper.deleteRecord(correlationId);
 							monoSink.error(t);
 						}).subscribeOn(Schedulers.newSingle("kafka-thread")).subscribe();
-			}).doOnError(t -> {
-				log.error("could not extract body", t);
-				monoSink.error(t);
-			}).subscribe();
+			}).doOnError(t -> reportExtractBodyError(monoSink, t)).subscribe();
 		});
 
 		return response;
