@@ -70,7 +70,6 @@ public class HttpWfHandler {
 		String correlationId = "ci" + UUID.randomUUID();
 
 		Mono<ServerResponse> response = Mono.<ServerResponse>create(monoSink -> {
-
 			request.body(BodyExtractors.toMono(String.class)).doOnSuccess(message -> {
 				syncReqRespHelper.addRecord(correlationId, monoSink);
 				producer.sendForSync(correlationId, key, message)
