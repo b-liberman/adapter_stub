@@ -76,6 +76,25 @@ public class HttpWfServiceConfig {
 	}
 
 	@Bean
+	public PrivateKey privateKey(KeyStore keyStore) throws Exception {
+		return (PrivateKey) keyStore.getKey(pkcs12KeyStoreAlias, pkcs12KeyPassword.toCharArray());
+	}
+
+	@Bean
+	public X509Certificate certificate(KeyStore keyStore) throws Exception {
+		return (X509Certificate) keyStore.getCertificate(pkcs12KeyStoreAlias);
+	}
+
+	@Bean
+	public KeyStore keyStore() throws Exception {
+		InputStream is = applicationContext.getResource(pkcs12KeyStorePath).getInputStream();
+		KeyStore keyStore = KeyStore.getInstance("pkcs12");
+		keyStore.load(is, pkcs12KeyStorePassword.toCharArray());
+		is.close();
+		return keyStore;
+	}
+
+	@Bean
 	public HttpServer httpServer(PrivateKey privateKey, X509Certificate certificate) {
 		// return HttpServer.create(portNumber);
 		return HttpServer.create(options -> {
@@ -103,23 +122,5 @@ public class HttpWfServiceConfig {
 				httpServer.newHandler(adapter).block();
 			});
 		};
-	}
-
-	@Bean
-	public PrivateKey privateKey() throws Exception {
-		InputStream is = applicationContext.getResource(pkcs12KeyStorePath).getInputStream();
-		KeyStore keyStore = KeyStore.getInstance("pkcs12");
-		keyStore.load(is, pkcs12KeyStorePassword.toCharArray());
-		is.close();
-		return (PrivateKey) keyStore.getKey(pkcs12KeyStoreAlias, pkcs12KeyPassword.toCharArray());
-	}
-
-	@Bean
-	public X509Certificate certificate() throws Exception {
-		InputStream is = applicationContext.getResource(pkcs12KeyStorePath).getInputStream();
-		KeyStore keyStore = KeyStore.getInstance("pkcs12");
-		keyStore.load(is, pkcs12KeyStorePassword.toCharArray());
-		is.close();
-		return (X509Certificate) keyStore.getCertificate(pkcs12KeyStoreAlias);
 	}
 }
