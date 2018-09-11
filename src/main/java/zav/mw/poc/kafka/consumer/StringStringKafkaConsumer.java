@@ -35,11 +35,11 @@ public class StringStringKafkaConsumer {
 
 	@KafkaListener(topics = "${zavMwPoc.kafka.topic}")
 	public void listen(ConsumerRecord<String, String> record) {
-		log.debug("received message with key " + record.key() + " value " + record.value());
 		webClient.post().uri(HttpWfServiceConfig.JUST_LOG_URI).body(BodyInserters.fromObject(record.value())).exchange()
 				.doOnSuccess(cr -> cr.body(BodyExtractors.toMono(String.class))
-						.subscribe(returnedMessage -> log.debug(returnedMessage)))
-				.subscribeOn(Schedulers.newSingle("web-client-thread")).subscribe();
+						.doOnSuccess(returnedMessage -> log.debug(returnedMessage)).doOnError(t -> log.error(t))
+						.subscribe())
+				.doOnError(t -> log.error(t)).subscribeOn(Schedulers.newSingle("web-client-thread")).subscribe();
 	}
 
 	@KafkaListener(topics = "${zavMwPoc.kafka.sync-req-topic}")
@@ -53,7 +53,8 @@ public class StringStringKafkaConsumer {
 		webClient.post().uri(HttpWfServiceConfig.TEST_KAFKA_RR_ECHO_URI).body(BodyInserters.fromObject(record.value()))
 				.exchange()
 				.doOnSuccess(cr -> cr.body(BodyExtractors.toMono(String.class))
-						.subscribe(returnedMessage -> completableFuture.complete(returnedMessage)))
+						.doOnSuccess(returnedMessage -> completableFuture.complete(returnedMessage))
+						.doOnError(t -> completableFuture.completeExceptionally(t)).subscribe())
 				.doOnError(t -> completableFuture.completeExceptionally(t))
 				.subscribeOn(Schedulers.newSingle("web-client-thread")).subscribe();
 		try {

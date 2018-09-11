@@ -20,3 +20,7 @@ zavMwPoc:
     topic: zavMwPoCTopic
     sync-req-topic: zavMwPoCSyncReqTopic
     sync-resp-topic: zavMwPoCSyncRespTopic
+  ssl:
+    pkcs12-path: ssl/zavpoc.pkcs12
+    password: zavpoc
+    alias: zavpoc
