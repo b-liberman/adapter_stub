@@ -69,7 +69,7 @@ public class HttpWfHandler {
 		String key = request.pathVariable("key") + UUID.randomUUID();
 		String correlationId = "ci" + UUID.randomUUID();
 
-		Mono<ServerResponse> response = Mono.<ServerResponse>create(monoSink -> {
+		return Mono.<ServerResponse>create(monoSink -> {
 			request.body(BodyExtractors.toMono(String.class)).doOnSuccess(message -> {
 				syncReqRespHelper.addRecord(correlationId, monoSink);
 				producer.sendForSync(correlationId, key, message)
@@ -81,8 +81,5 @@ public class HttpWfHandler {
 						}).subscribeOn(Schedulers.newSingle("kafka-thread")).subscribe();
 			}).doOnError(t -> reportExtractBodyError(monoSink, t)).subscribe();
 		});
-
-		return response;
-
 	}
 }
