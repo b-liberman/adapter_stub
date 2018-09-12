@@ -16,7 +16,7 @@ server:
 
 zavMwPoc:
   kafka:
-    bootstrapServers: localhost:29092
+    bootstrapServers: localhost:29093
     topic: zavMwPoCTopic
     sync-req-topic: zavMwPoCSyncReqTopic
     sync-resp-topic: zavMwPoCSyncRespTopic
