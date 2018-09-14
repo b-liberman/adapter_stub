@@ -21,6 +21,12 @@ public class KafkaProducerConfig {
 	@Value("${zavMwPoc.kafka.bootstrapServers}")
 	private String kafkaBootstrapServers;
 
+	@Value("${zavMwPoc.kafka.authentication.username}")
+	private String kafkaUserName;
+
+	@Value("${zavMwPoc.kafka.authentication.password}")
+	private String kafkaPassword;
+
 	@Bean
 	public Map<String, Object> stringStringProducerConfigs() {
 		Map<String, Object> producerProps = new HashMap<>();
@@ -32,7 +38,8 @@ public class KafkaProducerConfig {
 		producerProps.put(SaslConfigs.SASL_MECHANISM, "PLAIN");
 		producerProps.put("security.protocol", "SASL_PLAINTEXT");
 		producerProps.put(SaslConfigs.SASL_JAAS_CONFIG,
-				"org.apache.kafka.common.security.plain.PlainLoginModule required username=\"zavpoc\" password=\"zavpoc\";");
+				"org.apache.kafka.common.security.plain.PlainLoginModule required username=" + kafkaUserName
+						+ " password=" + kafkaPassword + ";");
 		return producerProps;
 	}
 
