@@ -36,6 +36,7 @@ public class SbAppTest {
 		KeyStore keyStore = KeyStore.getInstance("pkcs12");
 		keyStore.load(is, "zavpoc".toCharArray());
 		is.close();
+		//
 		X509Certificate certificate = (X509Certificate) keyStore.getCertificate("zavpoc");
 
 		SslContext sslContext = SslContextBuilder.forClient().trustManager(certificate).build();
