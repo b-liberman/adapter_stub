@@ -11,7 +11,7 @@ node  {
 		scmVars.each { k, v -> echo "*** ${k}:${v}"}
 	}
 	
-	jarFileName = 'avro_test'
+	jarFileName = 'adapter_stub'
 	jarFileVersion = currentBuild.number
 	
 	stage('build project') {
